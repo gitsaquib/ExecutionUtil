@@ -10,6 +10,7 @@ public class Configuration {
 	private String runCount;
 	private String inputFile;
 	private String restartSeetest;
+	private String retryCount;
 	
 	public String getDllName() {
 		return dllName;
@@ -58,5 +59,11 @@ public class Configuration {
 	}
 	public void setRestartSeetest(String restartSeetest) {
 		this.restartSeetest = restartSeetest;
+	}
+	public String getRetryCount() {
+		return retryCount;
+	}
+	public void setRetryCount(String retryCount) {
+		this.retryCount = retryCount;
 	}
 }

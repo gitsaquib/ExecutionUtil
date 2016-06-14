@@ -1,6 +1,7 @@
 package com.pearson.psoc.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,12 +9,12 @@ import java.util.Map;
 import java.util.Set;
 
 public class ExecuteTestSet {
-
-	public static void main(String args[]) throws Exception {
-		Configuration configuration = ExecuteTestSetUtil.readConfigFile();
+	private static Configuration configuration;
+	private static Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
+	
+	public ExecuteTestSet() {
+		configuration = ExecuteTestSetUtil.readConfigFile();
 		if (null != configuration) {
-
-			Map<String, String> testCases = new LinkedHashMap<String, String>();
 			try {
 				if(configuration.getInputFile().contains(".xls") || configuration.getInputFile().contains(".XLS")) {
 					testCases = ExecuteTestSetUtil.readXlsInputFile(configuration
@@ -25,19 +26,43 @@ public class ExecuteTestSet {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
+		}
+	}
+	
+	public List<String> getTestCaseFeatures() {
+		List<String> features = new ArrayList<String>();
+		features.add(" --Select-- ");
+		if (null != configuration) {
+			Set<String> testCaseIds = testCases.keySet();
+			for (String testCaseId : testCaseIds) {
+				TestCase testCase = testCases.get(testCaseId);
+				if(!features.contains(testCase.getTestCaseFeature())) {
+					features.add(testCase.getTestCaseFeature());
+				}
+			}
+		}
+		features.add("All");
+		return features;
+	}
+	
+	public void executeTestCases() {
+		if (null != configuration) {
 			Set<String> testCaseIds = testCases.keySet();
 			List<String> failedCases = new LinkedList<String>();
 			int countOfRun = 0;
 			for (String testCaseId : testCaseIds) {
-				String testMethodName = testCases.get(testCaseId);
+				TestCase testCase = testCases.get(testCaseId);
 				countOfRun++;
-				Thread.sleep(5000);
-				String status = executeCommand(testMethodName, configuration);
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				String status = executeCommand(testCase.getTestCaseName(), configuration);
 				if (!status.equals("Passed")) {
 					failedCases.add(testCaseId);
 				} else {
-					System.out
-							.println(testCaseId + "\tPass\t" + testMethodName);
+					System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 				}
 
 				if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
@@ -55,48 +80,41 @@ public class ExecuteTestSet {
 			}
 			countOfRun = 0;
 			for (String testCaseId : failedCases) {
-				countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
+				try {
+					countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
-		/*
-		 * try { ExecuteTestSetUtil.getTestCasesDetails(
-		 * "D:\\Project\\PSoC\\code\\Win\\WinPSCAutomation\\Pearson.PSCWinAutomation.212App"
-		 * ); } catch (IOException e) { e.printStackTrace(); }
-		 */
-		/*
-		 * try { ExecuteTestSetUtil.getLoginDetails(
-		 * "D:\\Project\\PSoC\\code\\SeeTestAutomation\\Pearson.PSCAutomation.212App"
-		 * ); } catch (IOException e) { e.printStackTrace(); }
-		 */
 	}
 
-	private static int reRunFailedCases(Configuration configuration,
-			Map<String, String> testCases, int countOfRun, String testCaseId)
+	private int reRunFailedCases(Configuration configuration,
+			Map<String, TestCase> testCases, int countOfRun, String testCaseId)
 			throws InterruptedException {
-		String testMethodName = testCases.get(testCaseId);
+		TestCase testCase = testCases.get(testCaseId);
 		countOfRun++;
-		Thread.sleep(10000);
-		String status = executeCommand(testMethodName, configuration);
-		if (!status.equals("Passed")) {
-			countOfRun++;
-			status = executeCommand(testMethodName, configuration);
-			
-			System.out.println(testCaseId + "\t" + status + "\t"
-					+ testMethodName);
-			/*if (!status.equals("Passed")) {
-				countOfRun++;
-				status = executeCommand(testMethodName, configuration);
-				System.out.println(testCaseId + "\t" + status + "\t"
-						+ testMethodName);
+		Thread.sleep(3000);
+		String status = executeCommand(testCase.getTestCaseName(), configuration);
+		if(configuration.getRetryCount() == "1") {
+			if(status.equalsIgnoreCase("Passed")) {
+				System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 			} else {
-				System.out.println(testCaseId + "\t" + status + "\t"
-					+ testMethodName);
-			}*/
+				System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+			}
 		} else {
-			System.out
-					.println(testCaseId + "\tPass\t" + testMethodName);
+			if (!status.equals("Passed")) {
+				countOfRun++;
+				status = executeCommand(testCase.getTestCaseName(), configuration);
+				if(status.equalsIgnoreCase("Passed")) {
+					System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+				} else {
+					System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+				}
+			} else {
+				System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+			}
 		}
-
 		if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
 			if (countOfRun == Integer.parseInt(configuration
 					.getRunCount())) {
@@ -112,7 +130,7 @@ public class ExecuteTestSet {
 		return countOfRun;
 	}
 
-	private static String executeCommand(String testMethodName,
+	private String executeCommand(String testMethodName,
 			Configuration configuration) {
 		String status = ExecuteTestSetUtil.callCommandPrompt(
 				configuration.getDllHome(), configuration.getMsTest(),

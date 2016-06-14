@@ -248,8 +248,8 @@ public class ExecuteTestSetUtil {
 		}*/
 	}
 	
-	public static Map<String, String> readXlsInputFile(String inputSheet) throws IOException {
-		Map<String, String> testCases = new LinkedHashMap<String, String>();
+	public static Map<String, TestCase> readXlsInputFile(String inputSheet) throws IOException {
+		Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
 		File myFile = new File(inputSheet);
         FileInputStream fis = new FileInputStream(myFile);
         HSSFWorkbook myWorkBook = new HSSFWorkbook (fis);
@@ -257,20 +257,28 @@ public class ExecuteTestSetUtil {
         Iterator<HSSFRow> rowIterator = mySheet.rowIterator();
         while (rowIterator.hasNext()) {
         	HSSFRow row = rowIterator.next();
-        	testCases.put(""+(row.getCell(Short.parseShort("0")).getNumericCellValue()), row.getCell(Short.parseShort("1")).getStringCellValue());
+        	TestCase testCase = new TestCase();
+        	testCase.setTestCaseId(row.getCell(Short.parseShort("0")).getNumericCellValue()+"");
+        	testCase.setTestCaseName(row.getCell(Short.parseShort("1")).getStringCellValue());
+        	testCase.setTestCaseFeature(row.getCell(Short.parseShort("2")).getStringCellValue());
+        	testCases.put(""+(row.getCell(Short.parseShort("0")).getNumericCellValue()), testCase);
         }
         return testCases;
 	}
 	
-	public static Map<String, String> readTabDelimitedInputFile(String inputSheet) throws IOException {
-		Map<String, String> testCases = new LinkedHashMap<String, String>();
+	public static Map<String, TestCase> readTabDelimitedInputFile(String inputSheet) throws IOException {
+		Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
 		File myFile = new File(inputSheet);
         Scanner scan = new Scanner(myFile);
         String line="";
         while (scan.hasNextLine()) {
             line = scan.nextLine();
             String[] split=line.split("\t");
-            testCases.put(split[0], split[1]);
+            TestCase testCase = new TestCase();
+            testCase.setTestCaseId(split[0]);
+            testCase.setTestCaseName(split[1]);
+            testCase.setTestCaseFeature(split[2]);
+            testCases.put(split[0], testCase);
         } 
         return testCases;
 	}
@@ -295,6 +303,7 @@ public class ExecuteTestSetUtil {
 			configuration.setTestSettings(prop.getProperty("TESTSETTINGS"));
 			configuration.setInputFile(prop.getProperty("INPUTFILE"));
 			configuration.setRestartSeetest(prop.getProperty("RESTARTSEETEST"));
+			configuration.setRetryCount(prop.getProperty("RETRYCOUNT"));
 			return configuration;
     	} catch(Exception e) {
     		System.out.println("2. Unable to load config properties");

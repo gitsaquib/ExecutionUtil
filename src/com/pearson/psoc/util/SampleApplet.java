@@ -20,9 +20,10 @@ public class SampleApplet extends JApplet {
 	private int count = 0;
 	private String selectedFeature = "";
 	private Label label = new Label("PSC Automation Executor");
+	ExecuteTestSet executeTestSet = null;
 	
 	public void init() {
-		ExecuteTestSet executeTestSet = new ExecuteTestSet();
+		executeTestSet = new ExecuteTestSet();
 		List<String> features = executeTestSet.getTestCaseFeatures();
 		for (int i = 0; i < features.size(); i++)
 			c.addItem(features.get(i));
@@ -31,7 +32,7 @@ public class SampleApplet extends JApplet {
 					if(selectedFeature.isEmpty() || selectedFeature.equalsIgnoreCase(" --Select-- ")) {
 						JOptionPane.showMessageDialog(null, "Please select a feature or All for execution", "Error", JOptionPane.ERROR_MESSAGE);
 					} else {
-						System.out.println(selectedFeature);
+						executeTestSet.executeTestCases(selectedFeature);
 					}
 				}
 			});

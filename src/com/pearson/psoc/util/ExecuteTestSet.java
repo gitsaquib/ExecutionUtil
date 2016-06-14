@@ -45,26 +45,27 @@ public class ExecuteTestSet {
 		return features;
 	}
 	
-	public void executeTestCases() {
+	public void executeTestCases(String feature) {
 		if (null != configuration) {
 			Set<String> testCaseIds = testCases.keySet();
 			List<String> failedCases = new LinkedList<String>();
 			int countOfRun = 0;
 			for (String testCaseId : testCaseIds) {
 				TestCase testCase = testCases.get(testCaseId);
-				countOfRun++;
-				try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+				if(feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature)) {
+					countOfRun++;
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					String status = executeCommand(testCase.getTestCaseName(), configuration);
+					if (!status.equals("Passed")) {
+						failedCases.add(testCaseId);
+					} else {
+						System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+					}
 				}
-				String status = executeCommand(testCase.getTestCaseName(), configuration);
-				if (!status.equals("Passed")) {
-					failedCases.add(testCaseId);
-				} else {
-					System.out.println(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
-				}
-
 				if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
 					if (countOfRun == Integer.parseInt(configuration
 							.getRunCount())) {

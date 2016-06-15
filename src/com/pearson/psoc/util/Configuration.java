@@ -11,6 +11,7 @@ public class Configuration {
 	private String inputFile;
 	private String restartSeetest;
 	private String retryCount;
+	private String trackName;
 	
 	public String getDllName() {
 		return dllName;
@@ -65,5 +66,11 @@ public class Configuration {
 	}
 	public void setRetryCount(String retryCount) {
 		this.retryCount = retryCount;
+	}
+	public String getTrackName() {
+		return trackName;
+	}
+	public void setTrackName(String trackName) {
+		this.trackName = trackName;
 	}
 }

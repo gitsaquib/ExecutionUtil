@@ -5,6 +5,8 @@ public class TestCase {
 	private String testCaseId;
 	private String testCaseName;
 	private String testCaseFeature;
+	private String testCasePriority;
+	
 	public String getTestCaseId() {
 		return testCaseId;
 	}
@@ -22,5 +24,11 @@ public class TestCase {
 	}
 	public void setTestCaseFeature(String testCaseFeature) {
 		this.testCaseFeature = testCaseFeature;
+	}
+	public String getTestCasePriority() {
+		return testCasePriority;
+	}
+	public void setTestCasePriority(String testCasePriority) {
+		this.testCasePriority = testCasePriority;
 	}
 }

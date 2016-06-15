@@ -10,12 +10,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -25,6 +35,149 @@ public class ExecuteTestSetUtil {
 	
 	private static final String TASKLIST = "tasklist";
 	private static final String KILL = "taskkill /F /IM ";
+	private Configuration configuration;
+	private static Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
+	PrintWriter writer = null;
+	
+	public ExecuteTestSetUtil() {
+		configuration = readConfigFile();
+		try {
+	        final Calendar c = Calendar.getInstance();
+	        c.setTime(new Date());
+			File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+c.get(Calendar.MONTH)+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
+			folder.mkdirs();
+			writer =  new PrintWriter(folder + File.separator + "the-file-name.txt", "UTF-8");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (null != configuration) {
+			try {
+				if(configuration.getInputFile().contains(".xls") || configuration.getInputFile().contains(".XLS")) {
+					testCases = readXlsInputFile(configuration.getInputFile());	
+				} else {
+					testCases = readTabDelimitedInputFile(configuration.getInputFile());
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+	
+	public List<String> getTestCaseFeatures() {
+		List<String> features = new ArrayList<String>();
+		features.add(" --Select-- ");
+		if (null != configuration) {
+			Set<String> testCaseIds = testCases.keySet();
+			for (String testCaseId : testCaseIds) {
+				TestCase testCase = testCases.get(testCaseId);
+				if(!features.contains(testCase.getTestCaseFeature())) {
+					features.add(testCase.getTestCaseFeature());
+				}
+			}
+		}
+		features.add("All");
+		return features;
+	}
+	
+	public void executeTestCases(String feature, String testCaseType) {
+		if (null != configuration) {
+			Set<String> testCaseIds = testCases.keySet();
+			List<String> failedCases = new LinkedList<String>();
+			int countOfRun = 0;
+			for (String testCaseId : testCaseIds) {
+				TestCase testCase = testCases.get(testCaseId);
+				if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
+						&& (testCaseType.equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
+						) {
+					countOfRun++;
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					String status = executeCommand(testCase.getTestCaseName(), configuration);
+					if (!status.equals("Passed")) {
+						failedCases.add(testCaseId);
+					} else {
+						writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+					}
+				}
+				if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
+					if (countOfRun == Integer.parseInt(configuration
+							.getRunCount())) {
+						try {
+							restartSeetest(configuration.getSeeTest());
+							countOfRun = 0;
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			countOfRun = 0;
+			for (String testCaseId : failedCases) {
+				try {
+					countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		writer.close();
+	}
+
+	private int reRunFailedCases(Configuration configuration,
+			Map<String, TestCase> testCases, int countOfRun, String testCaseId)
+			throws InterruptedException {
+		TestCase testCase = testCases.get(testCaseId);
+		countOfRun++;
+		Thread.sleep(3000);
+		String status = executeCommand(testCase.getTestCaseName(), configuration);
+		if(configuration.getRetryCount() == "1") {
+			if(status.equalsIgnoreCase("Passed")) {
+				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+			} else {
+				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+			}
+		} else {
+			if (!status.equals("Passed")) {
+				countOfRun++;
+				status = executeCommand(testCase.getTestCaseName(), configuration);
+				if(status.equalsIgnoreCase("Passed")) {
+					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+				} else {
+					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+				}
+			} else {
+				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+			}
+		}
+		if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
+			if (countOfRun == Integer.parseInt(configuration
+					.getRunCount())) {
+				try {
+					restartSeetest(configuration.getSeeTest());
+					countOfRun = 0;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return countOfRun;
+	}
+
+	private String executeCommand(String testMethodName,
+			Configuration configuration) {
+		String status = callCommandPrompt(
+				configuration.getDllHome(), configuration.getMsTest(),
+				configuration.getTestSettings(), testMethodName,
+				configuration.getDllName());
+		return status;
+	}
 	
 	public static String callCommandPrompt(String debugFolderPath, String msTestExePath, String testSettingsPath, String testMethodName, String dllName) {
 		String status = "Inconclusive";
@@ -261,6 +414,7 @@ public class ExecuteTestSetUtil {
         	testCase.setTestCaseId(row.getCell(Short.parseShort("0")).getNumericCellValue()+"");
         	testCase.setTestCaseName(row.getCell(Short.parseShort("1")).getStringCellValue());
         	testCase.setTestCaseFeature(row.getCell(Short.parseShort("2")).getStringCellValue());
+        	testCase.setTestCasePriority(row.getCell(Short.parseShort("3")).getStringCellValue());
         	testCases.put(""+(row.getCell(Short.parseShort("0")).getNumericCellValue()), testCase);
         }
         return testCases;
@@ -278,6 +432,7 @@ public class ExecuteTestSetUtil {
             testCase.setTestCaseId(split[0]);
             testCase.setTestCaseName(split[1]);
             testCase.setTestCaseFeature(split[2]);
+            testCase.setTestCasePriority(split[3]);
             testCases.put(split[0], testCase);
         } 
         return testCases;
@@ -304,10 +459,19 @@ public class ExecuteTestSetUtil {
 			configuration.setInputFile(prop.getProperty("INPUTFILE"));
 			configuration.setRestartSeetest(prop.getProperty("RESTARTSEETEST"));
 			configuration.setRetryCount(prop.getProperty("RETRYCOUNT"));
+			configuration.setTrackName(prop.getProperty("TRACKNAME"));
 			return configuration;
     	} catch(Exception e) {
     		System.out.println("2. Unable to load config properties");
     	}
     	return null;
+	}
+	
+	public Configuration getConfiguration() {
+		return configuration;
+	}
+	
+	public void writeOutputFile(String message) {
+		writer.println(message);
 	}
 }

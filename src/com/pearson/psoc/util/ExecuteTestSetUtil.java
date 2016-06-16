@@ -12,7 +12,9 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,23 +39,11 @@ public class ExecuteTestSetUtil {
 	private static final String KILL = "taskkill /F /IM ";
 	private Configuration configuration;
 	private static Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
-	PrintWriter writer = null;
+	private PrintWriter writer = null;
+	private String filePath = null;
 	
 	public ExecuteTestSetUtil() {
 		configuration = readConfigFile();
-		try {
-	        final Calendar c = Calendar.getInstance();
-	        c.setTime(new Date());
-			File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+c.get(Calendar.MONTH)+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
-			folder.mkdirs();
-			writer =  new PrintWriter(folder + File.separator + "the-file-name.txt", "UTF-8");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		if (null != configuration) {
 			try {
 				if(configuration.getInputFile().contains(".xls") || configuration.getInputFile().contains(".XLS")) {
@@ -83,8 +73,25 @@ public class ExecuteTestSetUtil {
 		return features;
 	}
 	
-	public void executeTestCases(String feature, String testCaseType) {
+	public void executeTestCases(String feature, String testCaseType, String installType, String selectedGrade) {
 		if (null != configuration) {
+			if(!copyGradeSpecificFiles(configuration, selectedGrade)) {
+				System.out.println("Unable to copy");
+			}
+			try {
+		        final Calendar c = Calendar.getInstance();
+		        c.setTime(new Date());
+				File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+(new SimpleDateFormat("MMM").format(c.getTime()))+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
+				folder.mkdirs();
+				filePath = folder + File.separator + "Output-"+selectedGrade+"_"+c.getTime().getHours()+"-"+c.getTime().getMinutes()+"-"+c.getTime().getSeconds()+".txt";
+				writer =  new PrintWriter(filePath, "UTF-8");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			Set<String> testCaseIds = testCases.keySet();
 			List<String> failedCases = new LinkedList<String>();
 			int countOfRun = 0;
@@ -128,6 +135,14 @@ public class ExecuteTestSetUtil {
 			}
 		}
 		writer.close();
+	}
+
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 
 	private int reRunFailedCases(Configuration configuration,
@@ -473,5 +488,37 @@ public class ExecuteTestSetUtil {
 	
 	public void writeOutputFile(String message) {
 		writer.println(message);
+	}
+	
+	public List<String> getAvailableGrades(Configuration configuration) {
+		List<String> availableGrades = new ArrayList<String>();
+		String dllHome = configuration.getDllHome();
+		File loginXmlsFolder = new File(dllHome + File.separator + "LoginXmls");
+		if(loginXmlsFolder.exists()) {
+			File xmlFiles[] = loginXmlsFolder.listFiles();
+			if(xmlFiles.length > 0) {
+				availableGrades.add(" --Select-- ");
+			}
+			File file = null;
+			for(int i = 2; i <= 12; i++) {
+				file = new File(loginXmlsFolder, "Logins - Grade "+i+".xml");
+				if(file.exists()) {
+					availableGrades.add("Grade "+i);
+				}
+			}
+		}
+		return availableGrades;
+	}
+	
+	public boolean copyGradeSpecificFiles(Configuration configuration, String selectedGrade) {
+		String dllHome = configuration.getDllHome();
+		Path source = new File(dllHome + File.separator + "LoginXmls" + File.separator + "Logins - " + selectedGrade + ".xml").toPath();
+		Path target = new File(dllHome + File.separator + "Xml" + File.separator + "Logins.xml").toPath();
+		try {
+			Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 }

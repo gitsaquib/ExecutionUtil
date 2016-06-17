@@ -121,7 +121,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		
 		radioGroup = new CheckboxGroup();
         Checkbox criticalOnly = new Checkbox("Critical", radioGroup, false);
-        Checkbox all = new Checkbox("All", radioGroup, false);
+        Checkbox all = new Checkbox("All       ", radioGroup, false);
         JLabel testCaseLabel = new JLabel("Want to execute Critical or All? ");
         
         installationGroup = new CheckboxGroup();
@@ -134,12 +134,12 @@ public class SampleApplet extends JApplet implements Runnable {
 		label.setFont(headerFont);
 		myContainer.add(label);
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
 		
 		myContainer.add(new ImageComponent("images//processing.jpg"));
 	    
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
 			
 		testCaseLabel.setFont(labelFont);
 		myContainer.add(testCaseLabel);
@@ -148,7 +148,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		all.setFont(labelFont);
 		myContainer.add(all);
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
 		myContainer.add(installLabel);
 		installLabel.setFont(labelFont);
 		myContainer.add(freshInstall);
@@ -157,11 +157,11 @@ public class SampleApplet extends JApplet implements Runnable {
 		upgradeInstall.setFont(labelFont);
 		if(grades.size() > 2) {
 			myContainer.add(Box.createHorizontalGlue());
-			myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+			myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
 			myContainer.add(gradeBox);
 		}
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
 		myContainer.add(featureBox);
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
@@ -176,7 +176,7 @@ public class SampleApplet extends JApplet implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		run(new SampleApplet(), 500, 300);
+		run(new SampleApplet(), 500, 350);
 	}
 
 	public static void run(JApplet applet, int width, int height) {

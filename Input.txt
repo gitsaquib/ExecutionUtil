@@ -1,0 +1,6 @@
+4747	VariousVideoRelatedCriticalTestCases	Notebook	Critical
+4888	NotebookCriticalTestCasesOnGeneralScenarios	Notebook	Critical
+4894	MathNotebookCriticalTestCases	Notebook	Critical
+4901	VariousCameraVideoRelatedCriticalTestCases	Notebook	Critical
+53227	ChallengeProblemBasicTestCases	ChallengeProblem	Critical
+53229	VerifyCommonReadCriticalTestCases	CommonRead	Critical

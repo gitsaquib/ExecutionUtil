@@ -44,6 +44,11 @@ public class ExecuteTestSetUtil {
 	
 	public ExecuteTestSetUtil() {
 		configuration = readConfigFile();
+	}
+	
+	public List<String> getTestCaseFeatures() {
+		List<String> features = new ArrayList<String>();
+		features.add(" --Select-- ");
 		if (null != configuration) {
 			try {
 				if(configuration.getInputFile().contains(".xls") || configuration.getInputFile().contains(".XLS")) {
@@ -54,13 +59,6 @@ public class ExecuteTestSetUtil {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-		}
-	}
-	
-	public List<String> getTestCaseFeatures() {
-		List<String> features = new ArrayList<String>();
-		features.add(" --Select-- ");
-		if (null != configuration) {
 			Set<String> testCaseIds = testCases.keySet();
 			for (String testCaseId : testCaseIds) {
 				TestCase testCase = testCases.get(testCaseId);
@@ -75,7 +73,7 @@ public class ExecuteTestSetUtil {
 	
 	public void executeTestCases(String feature, String testCaseType, String installType, String selectedGrade) {
 		if (null != configuration) {
-			if(!copyGradeSpecificFiles(configuration, selectedGrade)) {
+			if(!copyGradeSpecificXmlFiles(configuration, selectedGrade)) {
 				System.out.println("Unable to copy");
 			}
 			try {
@@ -475,6 +473,7 @@ public class ExecuteTestSetUtil {
 			configuration.setRestartSeetest(prop.getProperty("RESTARTSEETEST"));
 			configuration.setRetryCount(prop.getProperty("RETRYCOUNT"));
 			configuration.setTrackName(prop.getProperty("TRACKNAME"));
+			configuration.setMasterFile(prop.getProperty("MASTERFILE"));
 			return configuration;
     	} catch(Exception e) {
     		System.out.println("2. Unable to load config properties");
@@ -510,7 +509,7 @@ public class ExecuteTestSetUtil {
 		return availableGrades;
 	}
 	
-	public boolean copyGradeSpecificFiles(Configuration configuration, String selectedGrade) {
+	public boolean copyGradeSpecificXmlFiles(Configuration configuration, String selectedGrade) {
 		String dllHome = configuration.getDllHome();
 		Path source = new File(dllHome + File.separator + "LoginXmls" + File.separator + "Logins - " + selectedGrade + ".xml").toPath();
 		Path target = new File(dllHome + File.separator + "Xml" + File.separator + "Logins.xml").toPath();
@@ -518,6 +517,49 @@ public class ExecuteTestSetUtil {
 			Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
 			return true;
 		} catch (IOException e) {
+			return false;
+		}
+	}
+	
+	public boolean generateInputFileForSelectedGrade(String inputSheet, String selectedGrade) {
+		File myFile = new File(inputSheet);
+        FileInputStream fis;
+        HSSFWorkbook myWorkBook;
+		try {
+			fis = new FileInputStream(myFile);
+			myWorkBook = new HSSFWorkbook (fis);
+			HSSFSheet mySheet = myWorkBook.getSheetAt(0);
+	        Iterator<HSSFRow> rowIterator = mySheet.rowIterator();
+	        short indexOfSelectedGrade = 0;
+	        HSSFRow headerRow = rowIterator.next();
+	        for(short i = 0; i < 11; i++) {
+	        	String headerName = headerRow.getCell(i).getStringCellValue();
+	        	if(headerName != null && headerName.equalsIgnoreCase(selectedGrade)) {
+	        		indexOfSelectedGrade = i;
+	        		break;
+	        	}
+	        }
+	        File inputFile = new File("Input.txt");
+	        if(inputFile.exists()) {
+	        	inputFile.delete();
+	        }
+	        PrintWriter inputFileWriter =  new PrintWriter("Input.txt", "UTF-8");
+	        while (rowIterator.hasNext()) {
+	        	HSSFRow row = rowIterator.next();
+	        	boolean isTestCaseSelectedForSelectedGarde = row.getCell(indexOfSelectedGrade)!= null 
+	        				? (row.getCell(indexOfSelectedGrade).getStringCellValue().equalsIgnoreCase("Yes") ? true : false ) : false;
+	        	if(isTestCaseSelectedForSelectedGarde) {
+		        	String rowStr = (row.getCell(Short.parseShort("0")).getNumericCellValue()+"").replace(".0", "") 
+		        			+ "\t" + row.getCell(Short.parseShort("1")).getStringCellValue() 
+		        			+ "\t" + row.getCell(Short.parseShort("2")).getStringCellValue() 
+		        			+ "\t" + row.getCell(Short.parseShort("3")).getStringCellValue();
+		        	inputFileWriter.println(rowStr);
+	        	}
+	        }
+	        inputFileWriter.close();
+	        return true;
+		} catch (IOException e) {
+			e.printStackTrace();
 			return false;
 		}
 	}

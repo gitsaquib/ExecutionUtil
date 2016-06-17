@@ -12,6 +12,7 @@ public class Configuration {
 	private String restartSeetest;
 	private String retryCount;
 	private String trackName;
+	private String masterFile;
 	
 	public String getDllName() {
 		return dllName;
@@ -72,5 +73,11 @@ public class Configuration {
 	}
 	public void setTrackName(String trackName) {
 		this.trackName = trackName;
+	}
+	public String getMasterFile() {
+		return masterFile;
+	}
+	public void setMasterFile(String masterFile) {
+		this.masterFile = masterFile;
 	}
 }

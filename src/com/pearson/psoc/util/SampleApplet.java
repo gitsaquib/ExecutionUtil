@@ -3,6 +3,7 @@ package com.pearson.psoc.util;
 import java.awt.Checkbox;
 import java.awt.CheckboxGroup;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -11,11 +12,14 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -132,11 +136,10 @@ public class SampleApplet extends JApplet implements Runnable {
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
 		
-		/*Image img = getImage(getCodeBase(), "processing.gif");
-		DrawingPanel drawing_panel =  new DrawingPanel(img);
-	    myContainer.add(drawing_panel);
-	    myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));*/
+		myContainer.add(new ImageComponent("images//processing.jpg"));
+	    
+		myContainer.add(Box.createHorizontalGlue());
+		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
 			
 		testCaseLabel.setFont(labelFont);
 		myContainer.add(testCaseLabel);
@@ -194,15 +197,25 @@ public class SampleApplet extends JApplet implements Runnable {
 	}
 } 
 
-class DrawingPanel extends JPanel { 
-	Image img;
-	DrawingPanel (Image img)
-	{ 
-		this.img = img; 
-	}
+class ImageComponent extends Component {
+    BufferedImage img;
+    public void paint(Graphics g) {
+       g.drawImage(img, 0, 0, null);
+    }
 
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-	    g.drawImage(img, 0, 0, this);
+    public ImageComponent(String path) {
+       try {
+          img = ImageIO.read(new File(path));
+       } catch (IOException e) {
+          e.printStackTrace();
+       }
+    }
+
+    public Dimension getPreferredSize() {
+       if (img == null) {
+          return new Dimension(100,100);
+       } else {
+          return new Dimension(img.getWidth(), img.getHeight());
+       }
     }
 }

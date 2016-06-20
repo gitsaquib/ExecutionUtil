@@ -93,43 +93,47 @@ public class ExecuteTestSetUtil {
 			Set<String> testCaseIds = testCases.keySet();
 			List<String> failedCases = new LinkedList<String>();
 			int countOfRun = 0;
-			for (String testCaseId : testCaseIds) {
-				TestCase testCase = testCases.get(testCaseId);
-				if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
-						&& (testCaseType.equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
-						) {
-					countOfRun++;
-					try {
-						Thread.sleep(3000);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-					String status = executeCommand(testCase.getTestCaseName(), configuration);
-					if (!status.equals("Passed")) {
-						failedCases.add(testCaseId);
-					} else {
-						writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
-					}
-				}
-				if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
-					if (countOfRun == Integer.parseInt(configuration
-							.getRunCount())) {
+			if(installApp(installType)) {
+				for (String testCaseId : testCaseIds) {
+					TestCase testCase = testCases.get(testCaseId);
+					if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
+							&& (testCaseType.equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
+							) {
+						countOfRun++;
 						try {
-							restartSeetest(configuration.getSeeTest());
-							countOfRun = 0;
-						} catch (Exception e) {
-							e.printStackTrace();
+							Thread.sleep(3000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+						String status = executeCommand(testCase.getTestCaseName(), configuration);
+						if (!status.startsWith("Pass")) {
+							failedCases.add(testCaseId);
+						} else {
+							writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+						}
+					}
+					if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
+						if (countOfRun == Integer.parseInt(configuration
+								.getRunCount())) {
+							try {
+								restartSeetest(configuration.getSeeTest());
+								countOfRun = 0;
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
-			}
-			countOfRun = 0;
-			for (String testCaseId : failedCases) {
-				try {
-					countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				countOfRun = 0;
+				for (String testCaseId : failedCases) {
+					try {
+						countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
+			} else {
+				System.out.println("Unable to install app");
 			}
 		}
 		writer.close();
@@ -151,16 +155,16 @@ public class ExecuteTestSetUtil {
 		Thread.sleep(3000);
 		String status = executeCommand(testCase.getTestCaseName(), configuration);
 		if(configuration.getRetryCount() == "1") {
-			if(status.equalsIgnoreCase("Passed")) {
+			if(status.startsWith("Pass")) {
 				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 			} else {
 				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
 			}
 		} else {
-			if (!status.equals("Passed")) {
+			if (!status.startsWith("Pass")) {
 				countOfRun++;
 				status = executeCommand(testCase.getTestCaseName(), configuration);
-				if(status.equalsIgnoreCase("Passed")) {
+				if(status.startsWith("Pass")) {
 					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 				} else {
 					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
@@ -217,9 +221,9 @@ public class ExecuteTestSetUtil {
 		}
 		if(s != null) {
 			if(s.startsWith("Pass")) {
-				status = "Passed";
+				status = "Pass";
 			} else if(s.startsWith("Fail")) {
-				status = "Failed";
+				status = "Fail";
 				//System.out.println(testMethodName+"\t"+s);
 			}
 		}
@@ -463,17 +467,19 @@ public class ExecuteTestSetUtil {
     	try {
     		Configuration configuration = new Configuration();
 			prop.load(stream);
-			configuration.setDllHome(prop.getProperty("DLLHOME"));
+			final String dir = System.getProperty("user.dir");
+	        System.out.println("current dir = " + dir);
+			configuration.setDllHome(dir+File.separator+prop.getProperty("DLLHOME"));
 			configuration.setDllName(prop.getProperty("DLLNAME"));
 			configuration.setMsTest(prop.getProperty("MSTEST"));
 			configuration.setRunCount(prop.getProperty("RUNCOUNT"));
 			configuration.setSeeTest(prop.getProperty("SEETEST"));
-			configuration.setTestSettings(prop.getProperty("TESTSETTINGS"));
-			configuration.setInputFile(prop.getProperty("INPUTFILE"));
+			configuration.setTestSettings(dir+File.separator+prop.getProperty("TESTSETTINGS"));
+			configuration.setInputFile(dir+File.separator+prop.getProperty("INPUTFILE"));
 			configuration.setRestartSeetest(prop.getProperty("RESTARTSEETEST"));
 			configuration.setRetryCount(prop.getProperty("RETRYCOUNT"));
 			configuration.setTrackName(prop.getProperty("TRACKNAME"));
-			configuration.setMasterFile(prop.getProperty("MASTERFILE"));
+			configuration.setMasterFile(dir+File.separator+prop.getProperty("MASTERFILE"));
 			return configuration;
     	} catch(Exception e) {
     		System.out.println("2. Unable to load config properties");
@@ -539,11 +545,11 @@ public class ExecuteTestSetUtil {
 	        		break;
 	        	}
 	        }
-	        File inputFile = new File("Input.txt");
+	        File inputFile = new File(configuration.getInputFile());
 	        if(inputFile.exists()) {
 	        	inputFile.delete();
 	        }
-	        PrintWriter inputFileWriter =  new PrintWriter("Input.txt", "UTF-8");
+	        PrintWriter inputFileWriter =  new PrintWriter(configuration.getInputFile(), "UTF-8");
 	        while (rowIterator.hasNext()) {
 	        	HSSFRow row = rowIterator.next();
 	        	boolean isTestCaseSelectedForSelectedGarde = row.getCell(indexOfSelectedGrade)!= null 
@@ -562,5 +568,15 @@ public class ExecuteTestSetUtil {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	public boolean installApp(String installOption) {
+		String status = "";
+		if(installOption.equalsIgnoreCase("Fresh")) {
+			status = executeCommand("InstallFreshApp", configuration);
+		} else {
+			status = executeCommand("InstallUpgradeApp", configuration);
+		}
+		return status.startsWith("Pass");
 	}
 }

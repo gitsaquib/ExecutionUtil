@@ -55,7 +55,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		abort.setPreferredSize(new Dimension(100, 20));
 		featureBox.setPreferredSize(new Dimension(200, 20));
 		gradeBox.setPreferredSize(new Dimension(200, 20));
-		JLabel label = new JLabel("PSC Automation Executor: "+executeTestSet.getConfiguration().getTrackName());
+		JLabel label = new JLabel("PSC Automation Run: "+executeTestSet.getConfiguration().getTrackName());
 		Font headerFont = new Font("Tahoma", Font.BOLD, 24);
 		Font labelFont = new Font("Tahoma", Font.PLAIN, 12);
 		
@@ -129,18 +129,21 @@ public class SampleApplet extends JApplet implements Runnable {
         Checkbox upgradeInstall = new Checkbox("Upgrade", installationGroup, false);
         JLabel installLabel = new JLabel("How you want to install app? ");
         
+        JLabel gradeLabel = new JLabel("Select Grade:    ");
+        JLabel componentLabel = new JLabel("Select Feature:  ");
         
-		myContainer.setBackground(new Color(255, 255, 204));
+		myContainer.setBackground(new Color(255, 255, 255));
+		myContainer.add(Box.createHorizontalGlue());
+		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
 		label.setFont(headerFont);
+		label.setForeground(new Color(0, 76, 153));
+		ImageComponent image = new ImageComponent("images//AppIcon.PNG");
+		myContainer.add(image);
+		myContainer.add(Box.createHorizontalGlue());
+		myContainer.add(Box.createRigidArea(new Dimension(500, 20)));
 		myContainer.add(label);
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
-		
-		myContainer.add(new ImageComponent("images//processing.jpg"));
-	    
-		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
-			
+		myContainer.add(Box.createRigidArea(new Dimension(500, 20)));
 		testCaseLabel.setFont(labelFont);
 		myContainer.add(testCaseLabel);
 		criticalOnly.setFont(labelFont);
@@ -148,7 +151,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		all.setFont(labelFont);
 		myContainer.add(all);
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
+		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
 		myContainer.add(installLabel);
 		installLabel.setFont(labelFont);
 		myContainer.add(freshInstall);
@@ -157,14 +160,18 @@ public class SampleApplet extends JApplet implements Runnable {
 		upgradeInstall.setFont(labelFont);
 		if(grades.size() > 2) {
 			myContainer.add(Box.createHorizontalGlue());
-			myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
+			myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
+			myContainer.add(gradeLabel);
+			gradeLabel.setFont(labelFont);
 			myContainer.add(gradeBox);
 		}
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 1)));
+		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
+		myContainer.add(componentLabel);
+		componentLabel.setFont(labelFont);
 		myContainer.add(featureBox);
 		myContainer.add(Box.createHorizontalGlue());
-		myContainer.add(Box.createRigidArea(new Dimension(400, 10)));
+		myContainer.add(Box.createRigidArea(new Dimension(500, 10)));
 		myContainer.add(executeButton);
 		myContainer.add(abort);
 		abort.setEnabled(false);
@@ -176,7 +183,7 @@ public class SampleApplet extends JApplet implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		run(new SampleApplet(), 500, 350);
+		run(new SampleApplet(), 500, 400);
 	}
 
 	public static void run(JApplet applet, int width, int height) {

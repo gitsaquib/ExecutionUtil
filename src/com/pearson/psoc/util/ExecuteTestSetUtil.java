@@ -41,6 +41,7 @@ public class ExecuteTestSetUtil {
 	private static Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
 	private PrintWriter writer = null;
 	private String filePath = null;
+	private Result result = null;
 	
 	public ExecuteTestSetUtil() {
 		configuration = readConfigFile();
@@ -71,10 +72,12 @@ public class ExecuteTestSetUtil {
 		return features;
 	}
 	
-	public void executeTestCases(String feature, String testCaseType, String installType, String selectedGrade) {
+	public Result executeTestCases(String feature, String testCaseType, String installType, String selectedGrade) {
+		result = new Result();
 		if (null != configuration) {
 			if(!copyGradeSpecificXmlFiles(configuration, selectedGrade)) {
-				System.out.println("Unable to copy");
+				result.setError(true);
+				result.setErrorMessage("Unable to copy login details file");
 			}
 			try {
 		        final Calendar c = Calendar.getInstance();
@@ -82,6 +85,7 @@ public class ExecuteTestSetUtil {
 				File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+(new SimpleDateFormat("MMM").format(c.getTime()))+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
 				folder.mkdirs();
 				filePath = folder + File.separator + "Output-"+selectedGrade+"_"+c.getTime().getHours()+"-"+c.getTime().getMinutes()+"-"+c.getTime().getSeconds()+".txt";
+				result.setOutFile(filePath);
 				writer =  new PrintWriter(filePath, "UTF-8");
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -97,7 +101,7 @@ public class ExecuteTestSetUtil {
 				for (String testCaseId : testCaseIds) {
 					TestCase testCase = testCases.get(testCaseId);
 					if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
-							&& (testCaseType.equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
+							&& (testCaseType.trim().equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
 							) {
 						countOfRun++;
 						try {
@@ -133,10 +137,12 @@ public class ExecuteTestSetUtil {
 					}
 				}
 			} else {
-				System.out.println("Unable to install app");
+				result.setError(true);
+				result.setErrorMessage("Unable to install app by using selected method.");
 			}
 		}
 		writer.close();
+		return result;
 	}
 
 	public String getFilePath() {
@@ -492,6 +498,13 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public void writeOutputFile(String message) {
+		if(message.contains("Pass")) {
+			result.setPassCount(result.getPassCount()+1);
+		} else if(message.contains("Fail")) {
+			result.setFailCount(result.getFailCount()+1);
+		} else if(message.contains("Inconclusive")) {
+			result.setInconclusiveCount(result.getInconclusiveCount()+1);
+		}
 		writer.println(message);
 	}
 	
@@ -516,6 +529,9 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public boolean copyGradeSpecificXmlFiles(Configuration configuration, String selectedGrade) {
+		if(selectedGrade.equalsIgnoreCase("") || selectedGrade.equalsIgnoreCase("Grade 1")) {
+			return true;
+		}
 		String dllHome = configuration.getDllHome();
 		Path source = new File(dllHome + File.separator + "LoginXmls" + File.separator + "Logins - " + selectedGrade + ".xml").toPath();
 		Path target = new File(dllHome + File.separator + "Xml" + File.separator + "Logins.xml").toPath();
@@ -539,10 +555,12 @@ public class ExecuteTestSetUtil {
 	        short indexOfSelectedGrade = 0;
 	        HSSFRow headerRow = rowIterator.next();
 	        for(short i = 0; i < 11; i++) {
-	        	String headerName = headerRow.getCell(i).getStringCellValue();
-	        	if(headerName != null && headerName.equalsIgnoreCase(selectedGrade)) {
-	        		indexOfSelectedGrade = i;
-	        		break;
+	        	if(null != headerRow.getCell(i)) {
+		        	String headerName = headerRow.getCell(i).getStringCellValue();
+		        	if(headerName != null && headerName.equalsIgnoreCase(selectedGrade)) {
+		        		indexOfSelectedGrade = i;
+		        		break;
+		        	}
 	        	}
 	        }
 	        File inputFile = new File(configuration.getInputFile());
@@ -571,12 +589,13 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public boolean installApp(String installOption) {
-		String status = "";
+		/*String status = "";
 		if(installOption.equalsIgnoreCase("Fresh")) {
 			status = executeCommand("InstallFreshApp", configuration);
 		} else {
 			status = executeCommand("InstallUpgradeApp", configuration);
 		}
-		return status.startsWith("Pass");
+		return status.startsWith("Pass");*/
+		return true;
 	}
 }

@@ -5,11 +5,11 @@ import java.awt.CheckboxGroup;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -19,14 +19,12 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 public class SampleApplet extends JApplet implements Runnable {
 		
@@ -43,10 +41,19 @@ public class SampleApplet extends JApplet implements Runnable {
 	private static String testCaseType = null;
 	private static String installType = null;
 	private static Container myContainer = null; 
+	private static List<String> grades = null;
+	private static Result result = null;
 	
 	public void run() 
     { 
-		executeTestSet.executeTestCases(selectedFeature, testCaseType, installType, selectedGrade);
+		result = executeTestSet.executeTestCases(selectedFeature, testCaseType, installType, selectedGrade);
+		if(result.isError()) {
+			JOptionPane.showMessageDialog(null, result.getErrorMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(null, "Pass: " + result.getPassCount() + "\nFail: " + result.getFailCount() + "\nInconclusive: " + result.getInconclusiveCount(), "Status", JOptionPane.INFORMATION_MESSAGE);
+		}
+		executeButton.setEnabled(true);
+		abort.setLabel("Report");
     }
 	
 	public void init() {
@@ -59,13 +66,14 @@ public class SampleApplet extends JApplet implements Runnable {
 		Font headerFont = new Font("Tahoma", Font.BOLD, 24);
 		Font labelFont = new Font("Tahoma", Font.PLAIN, 12);
 		
-		List<String> grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
+		grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
        
 		for (int i = 0; i < grades.size(); i++) {
 			gradeBox.addItem(grades.get(i));
 		}
 		executeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				abort.setLabel("Abort");
 				Checkbox selectedInstallCheckbox = installationGroup.getSelectedCheckbox();
 				Checkbox selectedTestCaseTypeCheckbox = radioGroup.getSelectedCheckbox();
 				if(null != selectedTestCaseTypeCheckbox) {
@@ -73,7 +81,7 @@ public class SampleApplet extends JApplet implements Runnable {
 						if(selectedFeature.isEmpty() || selectedFeature.equalsIgnoreCase(" --Select-- ")) {
 							JOptionPane.showMessageDialog(null, "Please select a feature or All for execution", "Error", JOptionPane.ERROR_MESSAGE);
 						} else {
-							if(selectedGrade.isEmpty() || selectedGrade.equalsIgnoreCase(" --Select-- ")) {
+							if(grades.size() > 2 && (selectedGrade.isEmpty() || selectedGrade.equalsIgnoreCase(" --Select-- "))) {
 								JOptionPane.showMessageDialog(null, "Please select a Grade for execution", "Error", JOptionPane.ERROR_MESSAGE);
 							} else {
 								executeButton.setEnabled(false);
@@ -93,7 +101,15 @@ public class SampleApplet extends JApplet implements Runnable {
 		});
 		abort.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
+				if(abort.getLabel().equalsIgnoreCase("Abort")){
+					System.exit(0);
+				} else if(abort.getLabel().equalsIgnoreCase("Report")){
+					try {
+						Desktop.getDesktop().open(new File(result.getOutFile()));
+					} catch (IOException e1) {
+						JOptionPane.showMessageDialog(null, "Unable to open report file", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
 			}
 		});
 		featureBox.addActionListener(new ActionListener() {
@@ -164,6 +180,13 @@ public class SampleApplet extends JApplet implements Runnable {
 			myContainer.add(gradeLabel);
 			gradeLabel.setFont(labelFont);
 			myContainer.add(gradeBox);
+		} else {
+			executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
+			List<String> features = executeTestSet.getTestCaseFeatures();
+			featureBox.removeAllItems();
+			for (int i = 0; i < features.size(); i++) {
+				featureBox.addItem(features.get(i));
+			}
 		}
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));

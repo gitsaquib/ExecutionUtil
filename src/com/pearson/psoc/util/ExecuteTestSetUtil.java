@@ -474,7 +474,6 @@ public class ExecuteTestSetUtil {
     		Configuration configuration = new Configuration();
 			prop.load(stream);
 			final String dir = System.getProperty("user.dir");
-	        System.out.println("current dir = " + dir);
 			configuration.setDllHome(dir+File.separator+prop.getProperty("DLLHOME"));
 			configuration.setDllName(prop.getProperty("DLLNAME"));
 			configuration.setMsTest(prop.getProperty("MSTEST"));
@@ -589,13 +588,15 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public boolean installApp(String installOption) {
-		/*String status = "";
+		String status = "";
+		if(installOption.equalsIgnoreCase("Already Installed")) {
+			return true;
+		}
 		if(installOption.equalsIgnoreCase("Fresh")) {
 			status = executeCommand("InstallFreshApp", configuration);
 		} else {
 			status = executeCommand("InstallUpgradeApp", configuration);
 		}
-		return status.startsWith("Pass");*/
-		return true;
+		return status.startsWith("Pass");
 	}
 }

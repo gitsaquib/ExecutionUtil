@@ -62,7 +62,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		abort.setPreferredSize(new Dimension(100, 20));
 		featureBox.setPreferredSize(new Dimension(200, 20));
 		gradeBox.setPreferredSize(new Dimension(200, 20));
-		JLabel label = new JLabel("PSC Automation Run: "+executeTestSet.getConfiguration().getTrackName());
+		JLabel label = new JLabel("Automation Run: "+executeTestSet.getConfiguration().getTrackName());
 		Font headerFont = new Font("Tahoma", Font.BOLD, 24);
 		Font labelFont = new Font("Tahoma", Font.PLAIN, 12);
 		
@@ -137,13 +137,14 @@ public class SampleApplet extends JApplet implements Runnable {
 		
 		radioGroup = new CheckboxGroup();
         Checkbox criticalOnly = new Checkbox("Critical", radioGroup, false);
-        Checkbox all = new Checkbox("All       ", radioGroup, false);
-        JLabel testCaseLabel = new JLabel("Want to execute Critical or All? ");
+        Checkbox all = new Checkbox("All                           ", radioGroup, false);
+        JLabel testCaseLabel = new JLabel("Execute Test Cases: ");
         
         installationGroup = new CheckboxGroup();
         Checkbox freshInstall = new Checkbox("Fresh", installationGroup, false);
         Checkbox upgradeInstall = new Checkbox("Upgrade", installationGroup, false);
-        JLabel installLabel = new JLabel("How you want to install app? ");
+        Checkbox alreadyInstall = new Checkbox("Already Installed", installationGroup, false);
+        JLabel installLabel = new JLabel("Install:     ");
         
         JLabel gradeLabel = new JLabel("Select Grade:    ");
         JLabel componentLabel = new JLabel("Select Feature:  ");
@@ -174,6 +175,8 @@ public class SampleApplet extends JApplet implements Runnable {
 		freshInstall.setFont(labelFont);
 		myContainer.add(upgradeInstall);
 		upgradeInstall.setFont(labelFont);
+		myContainer.add(alreadyInstall);
+		alreadyInstall.setFont(labelFont);
 		if(grades.size() > 2) {
 			myContainer.add(Box.createHorizontalGlue());
 			myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
@@ -206,7 +209,7 @@ public class SampleApplet extends JApplet implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		run(new SampleApplet(), 500, 400);
+		run(new SampleApplet(), 500, 450);
 	}
 
 	public static void run(JApplet applet, int width, int height) {

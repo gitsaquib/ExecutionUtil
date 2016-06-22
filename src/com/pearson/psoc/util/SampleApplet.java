@@ -22,15 +22,18 @@ import javax.swing.Box;
 import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 
 public class SampleApplet extends JApplet implements Runnable {
 		
 	private JComboBox featureBox = new JComboBox();
 	private JComboBox gradeBox = new JComboBox();
 	private JButton executeButton = new JButton("Execute");
+	private JButton selectFolderButton = new JButton("Browse");
 	private JButton abort = new JButton("Abort");
 	private int count = 0;
 	private static String selectedFeature = "";
@@ -43,6 +46,8 @@ public class SampleApplet extends JApplet implements Runnable {
 	private static Container myContainer = null; 
 	private static List<String> grades = null;
 	private static Result result = null;
+	private static JTextField textField = null;
+	private static JLabel gradeLabel = null;
 	
 	public void run() 
     { 
@@ -59,6 +64,7 @@ public class SampleApplet extends JApplet implements Runnable {
 	public void init() {
 		executeTestSet = new ExecuteTestSetUtil();
 		executeButton.setPreferredSize(new Dimension(100, 20));
+		selectFolderButton.setPreferredSize(new Dimension(80, 20));
 		abort.setPreferredSize(new Dimension(100, 20));
 		featureBox.setPreferredSize(new Dimension(200, 20));
 		gradeBox.setPreferredSize(new Dimension(200, 20));
@@ -66,11 +72,51 @@ public class SampleApplet extends JApplet implements Runnable {
 		Font headerFont = new Font("Tahoma", Font.BOLD, 24);
 		Font labelFont = new Font("Tahoma", Font.PLAIN, 12);
 		
-		grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
-       
-		for (int i = 0; i < grades.size(); i++) {
-			gradeBox.addItem(grades.get(i));
-		}
+		radioGroup = new CheckboxGroup();
+        Checkbox criticalOnly = new Checkbox("Critical", radioGroup, false);
+        Checkbox all = new Checkbox("All                           ", radioGroup, false);
+        JLabel testCaseLabel = new JLabel("Execute Test Cases: ");
+        installationGroup = new CheckboxGroup();
+        Checkbox freshInstall = new Checkbox("Fresh", installationGroup, false);
+        Checkbox upgradeInstall = new Checkbox("Upgrade", installationGroup, false);
+        Checkbox alreadyInstall = new Checkbox("Already Installed", installationGroup, false);
+        JLabel installLabel = new JLabel("Install:     ");
+        textField = new JTextField("                                        ");
+        JLabel browseExecutables = new JLabel("Debug Folder: ");
+        gradeLabel = new JLabel("Select Grade:    ");
+        JLabel componentLabel = new JLabel("Select Feature:  ");
+        
+		
+		selectFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser();
+			    chooser.setCurrentDirectory(new java.io.File("."));
+			    chooser.setDialogTitle("Browse the folder to process");
+			    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			    chooser.setAcceptAllFileFilterUsed(false);
+			    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			    	System.out.println(chooser.getSelectedFile().getAbsolutePath());
+			    	textField.setText(chooser.getSelectedFile().getAbsolutePath());
+			    }
+			    executeTestSet.getConfiguration().setDllHome(chooser.getSelectedFile().getAbsolutePath());
+			    grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
+			    if(null == grades || grades.size() > 2) {
+			    	for (int i = 0; i < grades.size(); i++) {
+						gradeBox.addItem(grades.get(i));
+					}
+				} else {
+					gradeBox.setVisible(false);
+					gradeLabel.setVisible(false);
+					executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
+					List<String> features = executeTestSet.getTestCaseFeatures();
+					featureBox.removeAllItems();
+					for (int i = 0; i < features.size(); i++) {
+						featureBox.addItem(features.get(i));
+					}
+				}
+			}
+		});
+		
 		executeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				abort.setLabel("Abort");
@@ -135,20 +181,6 @@ public class SampleApplet extends JApplet implements Runnable {
 			}
 		});
 		
-		radioGroup = new CheckboxGroup();
-        Checkbox criticalOnly = new Checkbox("Critical", radioGroup, false);
-        Checkbox all = new Checkbox("All                           ", radioGroup, false);
-        JLabel testCaseLabel = new JLabel("Execute Test Cases: ");
-        
-        installationGroup = new CheckboxGroup();
-        Checkbox freshInstall = new Checkbox("Fresh", installationGroup, false);
-        Checkbox upgradeInstall = new Checkbox("Upgrade", installationGroup, false);
-        Checkbox alreadyInstall = new Checkbox("Already Installed", installationGroup, false);
-        JLabel installLabel = new JLabel("Install:     ");
-        
-        JLabel gradeLabel = new JLabel("Select Grade:    ");
-        JLabel componentLabel = new JLabel("Select Feature:  ");
-        
 		myContainer.setBackground(new Color(255, 255, 255));
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
@@ -161,6 +193,13 @@ public class SampleApplet extends JApplet implements Runnable {
 		myContainer.add(label);
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(500, 20)));
+		myContainer.add(browseExecutables);
+		browseExecutables.setFont(labelFont);
+		myContainer.add(textField);
+		textField.setEditable(false);
+		myContainer.add(selectFolderButton);
+		myContainer.add(Box.createHorizontalGlue());
+		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
 		testCaseLabel.setFont(labelFont);
 		myContainer.add(testCaseLabel);
 		criticalOnly.setFont(labelFont);
@@ -177,7 +216,7 @@ public class SampleApplet extends JApplet implements Runnable {
 		upgradeInstall.setFont(labelFont);
 		myContainer.add(alreadyInstall);
 		alreadyInstall.setFont(labelFont);
-		if(grades.size() > 2) {
+		if(null == grades || grades.size() > 2) {
 			myContainer.add(Box.createHorizontalGlue());
 			myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
 			myContainer.add(gradeLabel);
@@ -209,7 +248,7 @@ public class SampleApplet extends JApplet implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		run(new SampleApplet(), 500, 450);
+		run(new SampleApplet(), 500, 520);
 	}
 
 	public static void run(JApplet applet, int width, int height) {

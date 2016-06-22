@@ -543,6 +543,9 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public boolean generateInputFileForSelectedGrade(String inputSheet, String selectedGrade) {
+		if(selectedGrade.contains("Select")) {
+			return true;
+		}
 		File myFile = new File(inputSheet);
         FileInputStream fis;
         HSSFWorkbook myWorkBook;

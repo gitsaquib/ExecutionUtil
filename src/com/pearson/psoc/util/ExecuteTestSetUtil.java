@@ -477,7 +477,7 @@ public class ExecuteTestSetUtil {
 			prop.load(stream);
 			final String dir = System.getProperty("user.dir");
 			System.out.println(dir);
-			configuration.setDllHome(dir+File.separator+prop.getProperty("DLLHOME"));
+			configuration.setDllHome(prop.getProperty("DLLHOME"));
 			configuration.setDllName(prop.getProperty("DLLNAME"));
 			configuration.setMsTest(prop.getProperty("MSTEST"));
 			configuration.setRunCount(prop.getProperty("RUNCOUNT"));

@@ -33,7 +33,8 @@ public class SampleApplet extends JApplet implements Runnable {
 	private JComboBox featureBox = new JComboBox();
 	private JComboBox gradeBox = new JComboBox();
 	private JButton executeButton = new JButton("Execute");
-	private JButton selectFolderButton = new JButton("Browse");
+	private JButton dllHomeFolderButton = new JButton("Browse");
+	private JButton settingsFolderButton = new JButton("Browse");
 	private JButton abort = new JButton("Abort");
 	private int count = 0;
 	private static String selectedFeature = "";
@@ -46,7 +47,8 @@ public class SampleApplet extends JApplet implements Runnable {
 	private static Container myContainer = null; 
 	private static List<String> grades = null;
 	private static Result result = null;
-	private static JTextField textField = null;
+	private static JTextField dllHomeField = null;
+	private static JTextField settingField = null;
 	private static JLabel gradeLabel = null;
 	
 	public void run() 
@@ -64,7 +66,8 @@ public class SampleApplet extends JApplet implements Runnable {
 	public void init() {
 		executeTestSet = new ExecuteTestSetUtil();
 		executeButton.setPreferredSize(new Dimension(100, 20));
-		selectFolderButton.setPreferredSize(new Dimension(80, 20));
+		dllHomeFolderButton.setPreferredSize(new Dimension(80, 20));
+		settingsFolderButton.setPreferredSize(new Dimension(80, 20));
 		abort.setPreferredSize(new Dimension(100, 20));
 		featureBox.setPreferredSize(new Dimension(200, 20));
 		gradeBox.setPreferredSize(new Dimension(200, 20));
@@ -81,13 +84,52 @@ public class SampleApplet extends JApplet implements Runnable {
         Checkbox upgradeInstall = new Checkbox("Upgrade", installationGroup, false);
         Checkbox alreadyInstall = new Checkbox("Already Installed", installationGroup, false);
         JLabel installLabel = new JLabel("Install:     ");
-        textField = new JTextField("                                        ");
-        JLabel browseExecutables = new JLabel("Debug Folder: ");
+        dllHomeField = new JTextField(executeTestSet.getConfiguration().getDllHome());
+        dllHomeField.setPreferredSize(new Dimension(121, 20));
+        dllHomeField.setToolTipText(executeTestSet.getConfiguration().getDllHome());
+        
+        settingField = new JTextField(executeTestSet.getConfiguration().getTestSettings());
+        settingField.setPreferredSize(new Dimension(121, 20));
+        settingField.setToolTipText(executeTestSet.getConfiguration().getTestSettings());
+        
+        grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
+	    if(null == grades || grades.size() > 2) {
+	    	for (int i = 0; i < grades.size(); i++) {
+				gradeBox.addItem(grades.get(i));
+			}
+		} else {
+			gradeBox.setVisible(false);
+			gradeLabel.setVisible(false);
+			executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
+			List<String> features = executeTestSet.getTestCaseFeatures();
+			featureBox.removeAllItems();
+			for (int i = 0; i < features.size(); i++) {
+				featureBox.addItem(features.get(i));
+			}
+		}
+        
+        JLabel browseExecutables = new JLabel("Debug Folder:  ");
+        JLabel browseSettings = new JLabel("Test Settings:  ");
         gradeLabel = new JLabel("Select Grade:    ");
         JLabel componentLabel = new JLabel("Select Feature:  ");
         
-		
-		selectFolderButton.addActionListener(new ActionListener() {
+        settingsFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser();
+			    chooser.setCurrentDirectory(new java.io.File("."));
+			    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			    chooser.setAcceptAllFileFilterUsed(false);
+			    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			    	String path = chooser.getSelectedFile().getAbsolutePath();
+			    	settingField.setText(path);
+			    	settingField.setPreferredSize(new Dimension(121, 20));
+			    	settingField.setToolTipText(path);
+			        executeTestSet.getConfiguration().setTestSettings(chooser.getSelectedFile().getAbsolutePath());
+			    }
+			}
+        });
+        
+		dllHomeFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser chooser = new JFileChooser();
 			    chooser.setCurrentDirectory(new java.io.File("."));
@@ -95,25 +137,27 @@ public class SampleApplet extends JApplet implements Runnable {
 			    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			    chooser.setAcceptAllFileFilterUsed(false);
 			    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-			    	System.out.println(chooser.getSelectedFile().getAbsolutePath());
-			    	textField.setText(chooser.getSelectedFile().getAbsolutePath());
+			    	String path = chooser.getSelectedFile().getAbsolutePath();
+			    	dllHomeField.setText(path);
+			    	dllHomeField.setPreferredSize(new Dimension(121, 20));
+			        dllHomeField.setToolTipText(path);
+			        executeTestSet.getConfiguration().setDllHome(chooser.getSelectedFile().getAbsolutePath());
+				    grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
+				    if(null == grades || grades.size() > 2) {
+				    	for (int i = 0; i < grades.size(); i++) {
+							gradeBox.addItem(grades.get(i));
+						}
+					} else {
+						gradeBox.setVisible(false);
+						gradeLabel.setVisible(false);
+						executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
+						List<String> features = executeTestSet.getTestCaseFeatures();
+						featureBox.removeAllItems();
+						for (int i = 0; i < features.size(); i++) {
+							featureBox.addItem(features.get(i));
+						}
+					}
 			    }
-			    executeTestSet.getConfiguration().setDllHome(chooser.getSelectedFile().getAbsolutePath());
-			    grades = executeTestSet.getAvailableGrades(executeTestSet.getConfiguration());
-			    if(null == grades || grades.size() > 2) {
-			    	for (int i = 0; i < grades.size(); i++) {
-						gradeBox.addItem(grades.get(i));
-					}
-				} else {
-					gradeBox.setVisible(false);
-					gradeLabel.setVisible(false);
-					executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
-					List<String> features = executeTestSet.getTestCaseFeatures();
-					featureBox.removeAllItems();
-					for (int i = 0; i < features.size(); i++) {
-						featureBox.addItem(features.get(i));
-					}
-				}
 			}
 		});
 		
@@ -195,9 +239,16 @@ public class SampleApplet extends JApplet implements Runnable {
 		myContainer.add(Box.createRigidArea(new Dimension(500, 20)));
 		myContainer.add(browseExecutables);
 		browseExecutables.setFont(labelFont);
-		myContainer.add(textField);
-		textField.setEditable(false);
-		myContainer.add(selectFolderButton);
+		myContainer.add(dllHomeField);
+		dllHomeField.setEditable(false);
+		myContainer.add(dllHomeFolderButton);
+		myContainer.add(Box.createHorizontalGlue());
+		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
+		myContainer.add(browseSettings);
+		browseSettings.setFont(labelFont);
+		myContainer.add(settingField);
+		settingField.setEditable(false);
+		myContainer.add(settingsFolderButton);
 		myContainer.add(Box.createHorizontalGlue());
 		myContainer.add(Box.createRigidArea(new Dimension(500, 1)));
 		testCaseLabel.setFont(labelFont);

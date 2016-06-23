@@ -192,7 +192,11 @@ public class SampleApplet extends JApplet implements Runnable {
 		abort.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(abort.getLabel().equalsIgnoreCase("Abort")){
-					System.exit(0);
+					int response = JOptionPane.showConfirmDialog(null, "Do you realy want to Abort execution?. Execution will stop after finishing currently running test method", 
+							"Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if(response == 0) {
+						System.exit(0);
+					}
 				} else if(abort.getLabel().equalsIgnoreCase("Report")){
 					try {
 						Desktop.getDesktop().open(new File(result.getOutFile()));

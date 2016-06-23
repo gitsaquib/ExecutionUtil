@@ -18,6 +18,8 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -64,11 +66,14 @@ public class ExecuteTestSetUtil {
 			for (String testCaseId : testCaseIds) {
 				TestCase testCase = testCases.get(testCaseId);
 				if(!features.contains(testCase.getTestCaseFeature())) {
-					features.add(testCase.getTestCaseFeature());
+					if(!testCase.getTestCaseFeature().equalsIgnoreCase("InitialDownload")) {
+						features.add(testCase.getTestCaseFeature());
+					}
 				}
 			}
 		}
 		features.add("All");
+		Collections.sort(features);
 		return features;
 	}
 	
@@ -100,7 +105,7 @@ public class ExecuteTestSetUtil {
 			if(installApp(installType)) {
 				for (String testCaseId : testCaseIds) {
 					TestCase testCase = testCases.get(testCaseId);
-					if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
+					if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase("InitialDownload") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
 							&& (testCaseType.trim().equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
 							) {
 						countOfRun++;

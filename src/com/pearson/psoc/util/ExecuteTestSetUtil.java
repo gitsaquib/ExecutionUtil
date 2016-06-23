@@ -446,18 +446,20 @@ public class ExecuteTestSetUtil {
 	public static Map<String, TestCase> readTabDelimitedInputFile(String inputSheet) throws IOException {
 		Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
 		File myFile = new File(inputSheet);
-        Scanner scan = new Scanner(myFile);
-        String line="";
-        while (scan.hasNextLine()) {
-            line = scan.nextLine();
-            String[] split=line.split("\t");
-            TestCase testCase = new TestCase();
-            testCase.setTestCaseId(split[0]);
-            testCase.setTestCaseName(split[1]);
-            testCase.setTestCaseFeature(split[2]);
-            testCase.setTestCasePriority(split[3]);
-            testCases.put(split[0], testCase);
-        } 
+		if(myFile.exists()) {
+	        Scanner scan = new Scanner(myFile);
+	        String line="";
+	        while (scan.hasNextLine()) {
+	            line = scan.nextLine();
+	            String[] split=line.split("\t");
+	            TestCase testCase = new TestCase();
+	            testCase.setTestCaseId(split[0]);
+	            testCase.setTestCaseName(split[1]);
+	            testCase.setTestCaseFeature(split[2]);
+	            testCase.setTestCasePriority(split[3]);
+	            testCases.put(split[0], testCase);
+	        } 
+		}
         return testCases;
 	}
 
@@ -474,12 +476,13 @@ public class ExecuteTestSetUtil {
     		Configuration configuration = new Configuration();
 			prop.load(stream);
 			final String dir = System.getProperty("user.dir");
+			System.out.println(dir);
 			configuration.setDllHome(dir+File.separator+prop.getProperty("DLLHOME"));
 			configuration.setDllName(prop.getProperty("DLLNAME"));
 			configuration.setMsTest(prop.getProperty("MSTEST"));
 			configuration.setRunCount(prop.getProperty("RUNCOUNT"));
 			configuration.setSeeTest(prop.getProperty("SEETEST"));
-			configuration.setTestSettings(dir+File.separator+prop.getProperty("TESTSETTINGS"));
+			configuration.setTestSettings(prop.getProperty("TESTSETTINGS"));
 			configuration.setInputFile(dir+File.separator+prop.getProperty("INPUTFILE"));
 			configuration.setRestartSeetest(prop.getProperty("RESTARTSEETEST"));
 			configuration.setRetryCount(prop.getProperty("RETRYCOUNT"));
@@ -546,6 +549,7 @@ public class ExecuteTestSetUtil {
 		if(selectedGrade.contains("Select")) {
 			return true;
 		}
+		System.out.println("Selected Grade - "+selectedGrade);
 		File myFile = new File(inputSheet);
         FileInputStream fis;
         HSSFWorkbook myWorkBook;

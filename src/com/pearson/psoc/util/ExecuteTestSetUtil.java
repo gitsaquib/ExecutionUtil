@@ -5,20 +5,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -84,21 +83,12 @@ public class ExecuteTestSetUtil {
 				result.setError(true);
 				result.setErrorMessage("Unable to copy login details file");
 			}
-			try {
-		        final Calendar c = Calendar.getInstance();
-		        c.setTime(new Date());
-				File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+(new SimpleDateFormat("MMM").format(c.getTime()))+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
-				folder.mkdirs();
-				filePath = folder + File.separator + "Output-"+selectedGrade+"_"+c.getTime().getHours()+"-"+c.getTime().getMinutes()+"-"+c.getTime().getSeconds()+".txt";
-				result.setOutFile(filePath);
-				writer =  new PrintWriter(filePath, "UTF-8");
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+	        final Calendar c = Calendar.getInstance();
+	        c.setTime(new Date());
+			File folder = new File("Results"+File.separator+c.get(Calendar.YEAR)+File.separator+(new SimpleDateFormat("MMM").format(c.getTime()))+File.separator+configuration.getTrackName()+File.separator+c.get(Calendar.DAY_OF_MONTH));
+			folder.mkdirs();
+			filePath = folder + File.separator + "Output-"+selectedGrade+"_"+c.getTime().getHours()+"-"+c.getTime().getMinutes()+"-"+c.getTime().getSeconds()+".txt";
+			result.setOutFile(filePath);
 			Set<String> testCaseIds = testCases.keySet();
 			List<String> failedCases = new LinkedList<String>();
 			int countOfRun = 0;
@@ -146,7 +136,6 @@ public class ExecuteTestSetUtil {
 				result.setErrorMessage("Unable to install app by using selected method.");
 			}
 		}
-		writer.close();
 		return result;
 	}
 
@@ -505,6 +494,11 @@ public class ExecuteTestSetUtil {
 	}
 	
 	public void writeOutputFile(String message) {
+		try {
+			writer =  new PrintWriter(new FileWriter(filePath, true));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		if(message.contains("Pass")) {
 			result.setPassCount(result.getPassCount()+1);
 		} else if(message.contains("Fail")) {
@@ -513,6 +507,7 @@ public class ExecuteTestSetUtil {
 			result.setInconclusiveCount(result.getInconclusiveCount()+1);
 		}
 		writer.println(message);
+		writer.close();
 	}
 	
 	public List<String> getAvailableGrades(Configuration configuration) {

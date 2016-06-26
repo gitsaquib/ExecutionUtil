@@ -99,6 +99,7 @@ public class SampleApplet extends JApplet implements Runnable {
 			}
 		} else {
 			gradeBox.setVisible(false);
+			gradeLabel = new JLabel("Select Grade:    ");
 			gradeLabel.setVisible(false);
 			executeTestSet.generateInputFileForSelectedGrade(executeTestSet.getConfiguration().getMasterFile(), "Grade 1");
 			List<String> features = executeTestSet.getTestCaseFeatures();

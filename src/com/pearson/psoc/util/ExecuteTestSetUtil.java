@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.Set;
 
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -39,7 +38,7 @@ public class ExecuteTestSetUtil {
 	private static final String TASKLIST = "tasklist";
 	private static final String KILL = "taskkill /F /IM ";
 	private Configuration configuration;
-	private static Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
+	private static Map<Integer, TestCase> testCases = new LinkedHashMap<Integer, TestCase>();
 	private PrintWriter writer = null;
 	private String filePath = null;
 	private Result result = null;
@@ -61,9 +60,8 @@ public class ExecuteTestSetUtil {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			Set<String> testCaseIds = testCases.keySet();
-			for (String testCaseId : testCaseIds) {
-				TestCase testCase = testCases.get(testCaseId);
+			for (int i=1; i<= testCases.size(); i++) {
+				TestCase testCase = testCases.get(i);
 				if(!features.contains(testCase.getTestCaseFeature())) {
 					if(!testCase.getTestCaseFeature().equalsIgnoreCase("InitialDownload")) {
 						features.add(testCase.getTestCaseFeature());
@@ -89,12 +87,12 @@ public class ExecuteTestSetUtil {
 			folder.mkdirs();
 			filePath = folder + File.separator + "Output-"+selectedGrade+"_"+c.getTime().getHours()+"-"+c.getTime().getMinutes()+"-"+c.getTime().getSeconds()+".txt";
 			result.setOutFile(filePath);
-			Set<String> testCaseIds = testCases.keySet();
-			List<String> failedCases = new LinkedList<String>();
+			Map<Integer, TestCase> failedCases = new LinkedHashMap<Integer, TestCase>();
 			int countOfRun = 0;
 			if(installApp(installType)) {
-				for (String testCaseId : testCaseIds) {
-					TestCase testCase = testCases.get(testCaseId);
+				int failCount = 1;
+				for (int i=1; i<= testCases.size(); i++) {
+					TestCase testCase = testCases.get(i);
 					if((feature.equalsIgnoreCase("All") || testCase.getTestCaseFeature().equalsIgnoreCase("InitialDownload") || testCase.getTestCaseFeature().equalsIgnoreCase(feature))
 							&& (testCaseType.trim().equalsIgnoreCase("All") || testCase.getTestCasePriority().equalsIgnoreCase(testCaseType))
 							) {
@@ -106,9 +104,10 @@ public class ExecuteTestSetUtil {
 						}
 						String status = executeCommand(testCase.getTestCaseName(), configuration);
 						if (!status.startsWith("Pass")) {
-							failedCases.add(testCaseId);
+							failedCases.put(failCount, testCase);
+							failCount++;
 						} else {
-							writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+							writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 						}
 					}
 					if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
@@ -124,9 +123,9 @@ public class ExecuteTestSetUtil {
 					}
 				}
 				countOfRun = 0;
-				for (String testCaseId : failedCases) {
+				for (int i=1; i<= failedCases.size(); i++) {
 					try {
-						countOfRun = reRunFailedCases(configuration, testCases, countOfRun, testCaseId);
+						countOfRun = reRunFailedCases(configuration, failedCases.get(i), countOfRun);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -148,29 +147,28 @@ public class ExecuteTestSetUtil {
 	}
 
 	private int reRunFailedCases(Configuration configuration,
-			Map<String, TestCase> testCases, int countOfRun, String testCaseId)
+			TestCase testCase, int countOfRun)
 			throws InterruptedException {
-		TestCase testCase = testCases.get(testCaseId);
 		countOfRun++;
 		Thread.sleep(3000);
 		String status = executeCommand(testCase.getTestCaseName(), configuration);
 		if(configuration.getRetryCount() == "1") {
 			if(status.startsWith("Pass")) {
-				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+				writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 			} else {
-				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+				writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
 			}
 		} else {
 			if (!status.startsWith("Pass")) {
 				countOfRun++;
 				status = executeCommand(testCase.getTestCaseName(), configuration);
 				if(status.startsWith("Pass")) {
-					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+					writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 				} else {
-					writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
+					writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\t"+ status);
 				}
 			} else {
-				writeOutputFile(testCaseId + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
+				writeOutputFile(testCase.getTestCaseId() + "\t" + testCase.getTestCaseName() +"\t"+ testCase.getTestCaseFeature() + "\tPass");
 			}
 		}
 		if (configuration.getRestartSeetest().equalsIgnoreCase("true")) {
@@ -418,13 +416,14 @@ public class ExecuteTestSetUtil {
 		}*/
 	}
 	
-	public static Map<String, TestCase> readXlsInputFile(String inputSheet) throws IOException {
-		Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
+	public static Map<Integer, TestCase> readXlsInputFile(String inputSheet) throws IOException {
+		Map<Integer, TestCase> testCases = new LinkedHashMap<Integer, TestCase>();
 		File myFile = new File(inputSheet);
         FileInputStream fis = new FileInputStream(myFile);
         HSSFWorkbook myWorkBook = new HSSFWorkbook (fis);
         HSSFSheet mySheet = myWorkBook.getSheetAt(0);
         Iterator<HSSFRow> rowIterator = mySheet.rowIterator();
+        int index = 1;
         while (rowIterator.hasNext()) {
         	HSSFRow row = rowIterator.next();
         	TestCase testCase = new TestCase();
@@ -432,17 +431,19 @@ public class ExecuteTestSetUtil {
         	testCase.setTestCaseName(row.getCell(Short.parseShort("1")).getStringCellValue());
         	testCase.setTestCaseFeature(row.getCell(Short.parseShort("2")).getStringCellValue());
         	testCase.setTestCasePriority(row.getCell(Short.parseShort("3")).getStringCellValue());
-        	testCases.put(""+(row.getCell(Short.parseShort("0")).getNumericCellValue()), testCase);
+        	testCases.put(index, testCase);
+        	index++;
         }
         return testCases;
 	}
 	
-	public static Map<String, TestCase> readTabDelimitedInputFile(String inputSheet) throws IOException {
-		Map<String, TestCase> testCases = new LinkedHashMap<String, TestCase>();
+	public static Map<Integer, TestCase> readTabDelimitedInputFile(String inputSheet) throws IOException {
+		Map<Integer, TestCase> testCases = new LinkedHashMap<Integer, TestCase>();
 		File myFile = new File(inputSheet);
 		if(myFile.exists()) {
 	        Scanner scan = new Scanner(myFile);
 	        String line="";
+	        int index = 1;
 	        while (scan.hasNextLine()) {
 	            line = scan.nextLine();
 	            String[] split=line.split("\t");
@@ -451,7 +452,8 @@ public class ExecuteTestSetUtil {
 	            testCase.setTestCaseName(split[1]);
 	            testCase.setTestCaseFeature(split[2]);
 	            testCase.setTestCasePriority(split[3]);
-	            testCases.put(split[0], testCase);
+	            testCases.put(index, testCase);
+	            index++;
 	        } 
 		}
         return testCases;

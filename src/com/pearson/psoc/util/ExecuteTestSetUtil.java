@@ -123,11 +123,17 @@ public class ExecuteTestSetUtil {
 					}
 				}
 				countOfRun = 0;
-				for (int i=1; i<= failedCases.size(); i++) {
-					try {
-						countOfRun = reRunFailedCases(configuration, failedCases.get(i), countOfRun);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+				if(configuration.getRetryCount() != "0") {
+					for (int i=1; i<= failedCases.size(); i++) {
+						try {
+							countOfRun = reRunFailedCases(configuration, failedCases.get(i), countOfRun);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				} else {
+					for (int i=1; i<= failedCases.size(); i++) {
+						writeOutputFile(failedCases.get(i).getTestCaseId() + "\t" + failedCases.get(i).getTestCaseName() +"\t"+ failedCases.get(i).getTestCaseFeature() + "\tFail");
 					}
 				}
 			} else {
